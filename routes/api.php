@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,4 +17,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::get('/test_mongodb', function (Request $request) {
+    $connection = DB::connection('mongodb');
+    $msg = 'access mongo';
+
+    try {
+        $connection->command(['ping' => 1]);
+    } catch (\Exception $e) {
+        $msg = 'mongo err' . $e->getMessage();
+    }
+
+    return ['msg' => $msg];
 });
