@@ -21,12 +21,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/test_mongodb', function (Request $request) {
     $connection = DB::connection('mongodb');
-    $msg = 'access mongo';
+    $msg = 'access mongo successfully!';
 
     try {
         $connection->command(['ping' => 1]);
     } catch (\Exception $e) {
-        $msg = 'mongo err' . $e->getMessage();
+        $msg = 'mongo err: ' . $e->getMessage();
     }
 
     return ['msg' => $msg];
