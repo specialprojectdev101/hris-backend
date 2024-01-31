@@ -36,7 +36,7 @@ return [
     'connections' => [
         'mongodb' => [
             'driver' => 'mongodb',
-            'dsn' => env('MONGODB_URI'),
+            'dsn' => env('MONGODB_URI', 'mongodb+srv://specialprojectdev101:spd101@cluster0.aoxgars.mongodb.net/?retryWrites=true&w=majority'),
             'database' => 'spd101_hris',
         ],
 
