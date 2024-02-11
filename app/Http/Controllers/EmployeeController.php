@@ -26,22 +26,13 @@ class EmployeeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, Employee $employee)
     {
         $success = false;
-        $employee = [];
+        $result = [];
 
         try {
-            $employee = Employee::create([
-                'idNumber' => $request->idNumber,
-                'firstName' => $request->firstName,
-                'middleName' => $request->middleName,
-                'lastName' => $request->lastName,
-                'email' => $request->email,
-                'contactNumber' => $request->contactNumber,
-                'username' => $request->username,
-                'password' => $request->password,
-            ]);
+            $result = $employee::create($request->all());
 
             if (!empty($employee)) {
                 $success = true;
@@ -53,8 +44,8 @@ class EmployeeController extends Controller
 
         return response()->json([
             'success' => $success,
-            'employee' => $employee,
             'message' => $message,
+            'result' => $result,
         ]);
     }
 
