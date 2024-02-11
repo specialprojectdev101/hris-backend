@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MovieController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
@@ -31,3 +32,5 @@ Route::get('/test_mongodb', function (Request $request) {
 
     return ['msg' => $msg];
 });
+
+Route::resource('movies', MovieController::class)->only(['store']);

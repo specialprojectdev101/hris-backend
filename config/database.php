@@ -37,7 +37,7 @@ return [
         'mongodb' => [
             'driver' => 'mongodb',
             'dsn' => env('MONGODB_URI', ''),
-            'database' => 'spd101_hris',
+            'database' => 'sample_mflix',
         ],
 
         'sqlite' => [
