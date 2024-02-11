@@ -1,18 +1,15 @@
 services:
     laravel.test:
+        image: spd101
         build:
-            context: ./vendor/laravel/sail/runtimes/8.3
+            context: ./docker
             dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
-            WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
@@ -20,7 +17,7 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-            - sail
+            - spd101
         depends_on:
             - mysql
     mysql:
@@ -38,7 +35,7 @@ services:
             - 'sail-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
-            - sail
+            - spd101
         healthcheck:
             test:
                 - CMD
@@ -48,7 +45,7 @@ services:
             retries: 3
             timeout: 5s
 networks:
-    sail:
+    spd101:
         driver: bridge
 volumes:
     sail-mysql:
