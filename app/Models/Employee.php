@@ -11,5 +11,14 @@ class Employee extends Model
     // use HasFactory;
     protected $connection = 'mongodb';
     protected $collection = 'employees';
-    protected $fillable = ['guid', 'email', 'firstName', 'middleName', 'lastName'];
+    protected $fillable = [
+        'idNumber',
+        'firstName',
+        'middleName',
+        'lastName',
+        'email',
+        'contactNumber',
+        'username',
+        'password'
+    ];
 }

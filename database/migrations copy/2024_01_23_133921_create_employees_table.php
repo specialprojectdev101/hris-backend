@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mongodb')->create('employees', function ($collection) {
-            $collection->unique('guid');
+            $collection->unique('email');
         });
     }
 
