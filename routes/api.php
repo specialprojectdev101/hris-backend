@@ -22,17 +22,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/test_mongodb', function (Request $request) {
+Route::get('/ping', function (Request  $request) {
     $connection = DB::connection('mongodb');
-    $msg = 'access mongo successfully!';
+    $message = 'MongoDB is accessible!';
 
     try {
         $connection->command(['ping' => 1]);
-    } catch (\Exception $e) {
-        $msg = 'mongo err: ' . $e->getMessage();
+    } catch (\Exception  $e) {
+        $message = 'MongoDB is not accessible. Error: ' . $e->getMessage();
     }
 
-    return ['msg' => $msg];
+    return ['message' => $message];
 });
 
 Route::resource('movies', MovieController::class)->only(['store']);

@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
+    protected $employee;
+
+    public function __construct()
+    {
+        $this->employee = new Employee();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -26,17 +34,19 @@ class EmployeeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, Employee $employee)
+    public function store(Request $request)
     {
         $success = false;
+        $message = "";
         $result = [];
 
         try {
-            $result = $employee::create($request->all());
+            $mdb_result = $this->employee->mdb->insertOne($request->all());
 
-            if (!empty($employee)) {
+            if ($mdb_result->isAcknowledged()) {
                 $success = true;
                 $message = 'Created successfully';
+                $result = (array) $mdb_result->getInsertedId();
             }
         } catch (\Throwable $th) {
             $message = 'Create employee error: ' . $th->getMessage();
@@ -54,13 +64,19 @@ class EmployeeController extends Controller
      */
     public function show(string $idNumber)
     {
-        $employee = [];
+        $success = false;
         $message = 'Employee not found';
+        $result = [];
+        $query = ['idNumber' => $idNumber];
 
         try {
-            $employee = Employee::where('idNumber', $idNumber)->get();
+            $bsonDoc = $this->employee->mdb->findOne($query);
 
-            if (!empty($employee[0]['idNumber'])) {
+            // to convert the MongoDB Document to a Laravel Model
+            $result = $this->employee->newFromBuilder((array) $bsonDoc);
+
+            if (!empty($result['idNumber'])) {
+                $success = true;
                 $message = 'Read employee successfully';
             }
         } catch (\Throwable $th) {
@@ -68,9 +84,9 @@ class EmployeeController extends Controller
         }
 
         return response()->json([
-            'success' => $employee ? true : false,
-            'employee' => $employee,
+            'success' => $success,
             'message' => $message,
+            'employee' => $result,
         ]);
     }
 
@@ -89,12 +105,25 @@ class EmployeeController extends Controller
     {
         $success = false;
         $message = 'Employee not found';
+        $result = [];
+        $match = ['idNumber' => $idNumber];
+        $update = ['$set' => $request->input()];
 
         try {
-            $success = Employee::where('idNumber', $idNumber)->update($request->input());
+            $mdb_result = $this->employee->mdb->updateOne($match, $update);
 
-            if ($success) {
-                $message = 'Updated successfully';
+            if ($mdb_result->getMatchedCount()) {
+                $success = true;
+                $message = 'Already updated';
+
+                $result = [
+                    'matchedCount' => $mdb_result->getMatchedCount(),
+                    'modifiedCount' => $mdb_result->getModifiedCount(),
+                ];
+
+                if ($mdb_result->getModifiedCount()) {
+                    $message = 'Updated successfully';
+                }
             }
         } catch (\Throwable $th) {
             $message = 'Update employee error: ' . $th->getMessage();
@@ -103,6 +132,7 @@ class EmployeeController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message,
+            'result' => $result,
         ]);
     }
 
@@ -113,12 +143,19 @@ class EmployeeController extends Controller
     {
         $success = false;
         $message = 'Employee not found';
+        $result = [];
+        $match = ['idNumber' => $idNumber];
 
         try {
-            $success = Employee::where('idNumber', $idNumber)->delete();
+            $result = $this->employee->mdb->deleteOne($match);
 
-            if ($success) {
+            if ($result->getDeletedCount()) {
+                $success = true;
                 $message = 'Deleted successfully';
+
+                $result = [
+                    'deletedCount' => $result->getDeletedCount(),
+                ];
             }
         } catch (\Throwable $th) {
             $message = 'Delete employee error: ' . $th->getMessage();
@@ -127,6 +164,7 @@ class EmployeeController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message,
+            'result' => $result,
         ]);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Models;
 
 /* use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model; */
+
+use Illuminate\Support\Facades\DB;
 use MongoDB\Laravel\Eloquent\Model;
 
 class Employee extends Model
@@ -24,4 +26,14 @@ class Employee extends Model
         'role',
         'designation',
     ];
+
+    public $mdb;
+
+    const CREATED_AT = 'createdAt';
+    const UPDATED_AT = 'updatedAt';
+
+    public function __construct()
+    {
+        $this->mdb = DB::connection($this->connection)->getCollection($this->collection);
+    }
 }
