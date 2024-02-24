@@ -38,16 +38,16 @@ class EmployeeController extends Controller
             $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
             $rules = [
-                'idNumber' => ['required', 'unique:employees'],
-                'firstName' => ['required'],
-                'middleName' => ['required'],
-                'lastName' => ['required'],
-                'email' => ['required', 'unique:employees'],
-                'contactNumber' => ['required', 'unique:employees'],
-                'username' => ['required', 'unique:employees'],
+                'idNumber' => ['required', 'string', 'unique:employees,idNumber'],
+                'firstName' => ['required', 'string'],
+                'middleName' => ['required', 'string'],
+                'lastName' => ['required', 'string'],
+                'email' => ['required', 'email', 'unique:employees,email'],
+                'contactNumber' => ['required', 'numeric', 'digits:11', 'unique:employees,contactNumber'],
+                'username' => ['required', 'string', 'min:5', 'unique:employees,username'],
                 'password' => ['required', 'confirmed', Password::defaults()],
-                'role' => ['required'],
-                'designation' => ['required'],
+                'role' => ['required', 'string'],
+                'designation' => ['required', 'string'],
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -121,28 +121,51 @@ class EmployeeController extends Controller
     {
         $employee = null;
         $where = ['idNumber' => $idNumber];
-        $requestParams = $request->all();
 
-        if (isset($requestParams['idNumber'])) {
-            unset($requestParams['idNumber']);
-        }
+        $rules = [
+            'idNumber' => ['sometimes', 'required', 'string', 'unique:employees,idNumber'],
+                'firstName' => ['sometimes', 'required', 'string'],
+                'middleName' => ['sometimes', 'required', 'string'],
+                'lastName' => ['sometimes', 'required', 'string'],
+                'email' => ['sometimes', 'required', 'email', 'unique:employees,email'],
+                'contactNumber' => ['sometimes', 'required', 'numeric', 'digits:11', 'unique:employees,contactNumber'],
+                'username' => ['sometimes', 'required', 'string', 'min:5', 'unique:employees,username'],
+                'password' => ['sometimes', 'required', 'confirmed', Password::defaults()],
+                'role' => ['sometimes', 'required', 'string'],
+                'designation' => ['sometimes', 'required', 'string'],
+        ];
 
-        $is_updated = Employee::where($where)->update($requestParams);
+        $validator = Validator::make($request->all(), $rules);
 
-        if ($is_updated) {
-            $this->http_response_status_code = 200;
-            $this->response = self::RESPONSE_SUCCESS;
-            $employee = Employee::firstWhere($where);
+        if ($validator->fails()) {
+            $this->http_response_status_code = 400;
+            $this->response = self::RESPONSE_BAD_REQUEST;
+            // $validator->stopOnFirstFailure()->fails();
+            $errors = $validator->errors();
         } else {
-            $this->http_response_status_code = 404;
-            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
+            $validated = $validator->validated();
+            $is_updated = Employee::where($where)->update($validated);
+
+            if ($is_updated) {
+                $this->http_response_status_code = 200;
+                $this->response = self::RESPONSE_SUCCESS;
+                $employee = Employee::firstWhere($where);
+            } else {
+                $this->http_response_status_code = 404;
+                $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
+            }
         }
 
         $result = [
             'code' => $this->response['code'],
             'message' => $this->response['message'],
-            'data' => $employee,
         ];
+
+        if (!empty($errors)) {
+            $result['errors'] = $errors;
+        } else {
+            $result['data'] = $employee;
+        }
 
         return response()->json($result, $this->http_response_status_code);
     }
@@ -167,6 +190,52 @@ class EmployeeController extends Controller
             'code' => $this->response['code'],
             'message' => $this->response['message'],
         ];
+
+        return response()->json($result, $this->http_response_status_code);
+    }
+
+    public function getAllEmployees(Request $request)
+    {
+        $errors = [];
+
+        $rules = [
+            'offset' => ['nullable', 'numeric'],
+            'limit' => ['nullable', 'numeric'],
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            $this->http_response_status_code = 400;
+            $this->response = self::RESPONSE_BAD_REQUEST;
+            // $validator->stopOnFirstFailure()->fails();
+            $errors = $validator->errors();
+        } else {
+            $validated = $validator->validated();
+            $offset = isset($validated['offset']) ? $validated['offset'] : 0;
+            $limit = isset($validated['limit']) ? $validated['limit'] : 10;
+
+            $employees = Employee::offset($offset)->limit($limit)->get();
+
+            if (!empty($employees)) {
+                $this->http_response_status_code = 200;
+                $this->response = self::RESPONSE_SUCCESS;
+            } else {
+                $this->http_response_status_code = 404;
+                $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
+            }
+        }
+
+        $result = [
+            'code' => $this->response['code'],
+            'message' => $this->response['message'],
+        ];
+
+        if (!empty($errors)) {
+            $result['errors'] = $errors;
+        } else {
+            $result['data'] = $employees;
+        }
 
         return response()->json($result, $this->http_response_status_code);
     }

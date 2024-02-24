@@ -38,3 +38,5 @@ Route::get('/ping', function (Request  $request) {
 Route::resource('movies', MovieController::class)->only(['store']);
 
 Route::resource('employee', EmployeeController::class)->only('store', 'show', 'update', 'destroy');
+
+Route::post('employees', [EmployeeController::class, 'getAllEmployees'])->name('employees.all');
