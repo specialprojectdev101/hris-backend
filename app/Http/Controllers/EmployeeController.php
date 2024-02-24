@@ -98,16 +98,15 @@ class EmployeeController extends Controller
             unset($requestParams['idNumber']);
         }
 
-        $isExists = Employee::where($where)->exists();
+        $is_updated = Employee::where($where)->update($requestParams);
 
-        if ($isExists) {
-            $result = Employee::where($where)->update($request->all());
-
-            if ($result) {
-                $this->response = self::RESPONSE_SUCCESS;
-            }
-
+        if ($is_updated) {
+            $this->http_response_status_code = 200;
+            $this->response = self::RESPONSE_SUCCESS;
             $employee = Employee::firstWhere($where);
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
         $result = [
@@ -124,34 +123,22 @@ class EmployeeController extends Controller
      */
     public function destroy(string $idNumber)
     {
-        $success = false;
-        $message = 'Employee not found';
+        $is_deleted = Employee::where(['idNumber' => $idNumber])->delete();
 
-        /* try {
-            $result = $this->employee->mdb->deleteOne($match);
-
-            if ($result->getDeletedCount()) {
-                $success = true;
-                $message = 'Deleted successfully';
-
-                $result = [
-                    'deletedCount' => $result->getDeletedCount(),
-                ];
-            }
-        } catch (Exception $e) {
-            $message = 'Delete employee error: ' . $e->getMessage();
-        } */
-
-        $result = Employee::where(['idNumber' => $idNumber])->delete();
-
-        if ($result) {
-            $success = true;
-            $message = 'Deleted successfully';
+        if ($is_deleted) {
+            $this->http_response_status_code = 200;
+            $this->response = self::RESPONSE_SUCCESS;
+            $this->response['message'] = 'Deleted successfully';
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
+        $result = [
+            'code' => $this->response['code'],
+            'message' => $this->response['message'],
+        ];
+
+        return response()->json($result, $this->http_response_status_code);
     }
 }

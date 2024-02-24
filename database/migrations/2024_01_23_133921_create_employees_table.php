@@ -16,6 +16,8 @@ return new class extends Migration
             $collection->unique('email');
             $collection->unique('contactNumber');
             $collection->unique('username');
+            $collection->index('role');
+            $collection->index('designation');
         });
     }
 
