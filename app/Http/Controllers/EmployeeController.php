@@ -4,17 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
-    protected $employee;
-
-    public function __construct()
-    {
-        $this->employee = new Employee();
-    }
-
     /**
      * Display a listing of the resource.
      */
@@ -36,44 +30,27 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        $success = false;
-        $message = "";
-        $employee = [];
-
-        /* try {
-            $mdb_result = $this->employee->mdb->insertOne($request->all());
-
-            if ($mdb_result->isAcknowledged()) {
-                $success = true;
-                $message = 'Created successfully';
-                $result = (array) $mdb_result->getInsertedId();
-            }
-        } catch (\Throwable $th) {
-            $message = 'Create employee error: ' . $th->getMessage();
-        }
-         */
-
         $employee = Employee::firstWhere(['idNumber' => $request->idNumber]);
 
         if (!empty($employee)) {
-            $success = true;
-            $message = "Employee already exists";
+            $this->http_response_status_code = 201;
+            $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
             $employee = Employee::create($request->all());
 
             if (!empty($employee)) {
-                $success = true;
-                $message = 'Created successfully';
+                $this->http_response_status_code = 200;
+                $this->response = self::RESPONSE_SUCCESS;
             }
         }
 
-        $result = $employee;
+        $result = [
+            'code' => $this->response['code'],
+            'message' => $this->response['message'],
+            'employee' => $employee,
+        ];
 
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-            'result' => $result,
-        ]);
+        return response()->json($result, $this->http_response_status_code);
     }
 
     /**
@@ -81,38 +58,23 @@ class EmployeeController extends Controller
      */
     public function show(string $idNumber)
     {
-        $success = false;
-        $message = 'Employee not found';
-
-        /* try {
-            $bsonDoc = $this->employee->mdb->findOne($query);
-
-            // to convert the MongoDB Document to a Laravel Model
-            $result = $this->employee->newFromBuilder((array) $bsonDoc);
-
-            if (!empty($result['idNumber'])) {
-                $success = true;
-                $message = 'Read employee successfully';
-            }
-        } catch (\Throwable $th) {
-            $message = 'Read employee error: ' . $th->getMessage();
-        }
-         */
-
         $employee = Employee::firstWhere(['idNumber' => $idNumber]);
 
-        if ($employee) {
-            $success = true;
-            $message = 'Read employee successfully';
+        if (!empty($employee)) {
+            $this->http_response_status_code = 200;
+            $this->response = self::RESPONSE_SUCCESS;
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
-        $result = $employee;
+        $result = [
+            'code' => $this->response['code'],
+            'message' => $this->response['message'],
+            'employee' => $employee,
+        ];
 
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-            'result' => $result,
-        ]);
+        return response()->json($result, $this->http_response_status_code);
     }
 
     /**
@@ -128,51 +90,33 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, string $idNumber)
     {
-        $success = false;
-        $message = 'Employee not found';
-        $result = [];
-        /* $match = ['idNumber' => $idNumber];
-        $update = ['$set' => $request->input()];
+        $employee = null;
+        $where = ['idNumber' => $idNumber];
+        $requestParams = $request->all();
 
-        try {
-            $mdb_result = $this->employee->mdb->updateOne($match, $update);
+        if (isset($requestParams['idNumber'])) {
+            unset($requestParams['idNumber']);
+        }
 
-            if ($mdb_result->getMatchedCount()) {
-                $success = true;
-                $message = 'Already updated';
+        $isExists = Employee::where($where)->exists();
 
-                $result = [
-                    'matchedCount' => $mdb_result->getMatchedCount(),
-                    'modifiedCount' => $mdb_result->getModifiedCount(),
-                ];
+        if ($isExists) {
+            $result = Employee::where($where)->update($request->all());
 
-                if ($mdb_result->getModifiedCount()) {
-                    $message = 'Updated successfully';
-                }
+            if ($result) {
+                $this->response = self::RESPONSE_SUCCESS;
             }
-        } catch (\Throwable $th) {
-            $message = 'Update employee error: ' . $th->getMessage();
-        } */
-        $employee = Employee::where(['idNumber' => $idNumber])->update($request->all());
 
-       /*  if (!empty($employee)) {
-            $success = true;
-            $message = "Employee already exists";
-        } else {
-            $employee = Employee::create($request->all());
+            $employee = Employee::firstWhere($where);
+        }
 
-            if (!empty($employee)) {
-                $success = true;
-                $message = 'Created successfully';
-            }
-        } */
+        $result = [
+            'code' => $this->response['code'],
+            'message' => $this->response['message'],
+            'employee' => $employee,
+        ];
 
-        $result = $employee->wasChanged();
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-            'result' => $result,
-        ]);
+        return response()->json($result, $this->http_response_status_code);
     }
 
     /**
@@ -194,8 +138,8 @@ class EmployeeController extends Controller
                     'deletedCount' => $result->getDeletedCount(),
                 ];
             }
-        } catch (\Throwable $th) {
-            $message = 'Delete employee error: ' . $th->getMessage();
+        } catch (Exception $e) {
+            $message = 'Delete employee error: ' . $e->getMessage();
         } */
 
         $result = Employee::where(['idNumber' => $idNumber])->delete();
