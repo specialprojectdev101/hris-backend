@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
-use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 
 class EmployeeController extends Controller
 {
@@ -30,25 +30,54 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
+        $errors = [];
         $employee = Employee::firstWhere(['idNumber' => $request->idNumber]);
 
         if (!empty($employee)) {
             $this->http_response_status_code = 201;
             $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
-            $employee = Employee::create($request->all());
+            $rules = [
+                'idNumber' => ['required', 'unique:employees'],
+                'firstName' => ['required'],
+                'middleName' => ['required'],
+                'lastName' => ['required'],
+                'email' => ['required', 'unique:employees'],
+                'contactNumber' => ['required', 'unique:employees'],
+                'username' => ['required', 'unique:employees'],
+                'password' => ['required', 'confirmed', Password::defaults()],
+                'role' => ['required'],
+                'designation' => ['required'],
+            ];
 
-            if (!empty($employee)) {
-                $this->http_response_status_code = 200;
-                $this->response = self::RESPONSE_SUCCESS;
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                $this->http_response_status_code = 400;
+                $this->response = self::RESPONSE_BAD_REQUEST;
+                // $validator->stopOnFirstFailure()->fails();
+                $errors = $validator->errors();
+            } else {
+                $validated = $validator->validated();
+                $employee = Employee::create($validated);
+
+                if (!empty($employee)) {
+                    $this->http_response_status_code = 200;
+                    $this->response = self::RESPONSE_SUCCESS;
+                }
             }
         }
 
         $result = [
             'code' => $this->response['code'],
             'message' => $this->response['message'],
-            'employee' => $employee,
         ];
+
+        if (!empty($errors)) {
+            $result['errors'] = $errors;
+        } else {
+            $result['data'] = $employee;
+        }
 
         return response()->json($result, $this->http_response_status_code);
     }
@@ -71,7 +100,7 @@ class EmployeeController extends Controller
         $result = [
             'code' => $this->response['code'],
             'message' => $this->response['message'],
-            'employee' => $employee,
+            'data' => $employee,
         ];
 
         return response()->json($result, $this->http_response_status_code);
@@ -112,7 +141,7 @@ class EmployeeController extends Controller
         $result = [
             'code' => $this->response['code'],
             'message' => $this->response['message'],
-            'employee' => $employee,
+            'data' => $employee,
         ];
 
         return response()->json($result, $this->http_response_status_code);

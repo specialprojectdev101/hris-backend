@@ -28,6 +28,11 @@ class Controller extends BaseController
         'message' => 'Employee not found',
     ];
 
+    const RESPONSE_BAD_REQUEST = [
+        'code' => 3,
+        'message' => 'Bad request',
+    ];
+
     const RESPONSE_INTERNAL_SERVER_ERROR = [
         'code' => 999,
         'message' => 'Internal server error',
