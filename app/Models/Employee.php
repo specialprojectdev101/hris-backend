@@ -25,15 +25,15 @@ class Employee extends Model
         'password',
         'role',
         'designation',
+        'createdAt',
+        'updatedAt',
     ];
 
-    public $mdb;
+    protected $casts = [
+        'createdAt' => 'datetime',
+        'updatedAt' => 'datetime',
+    ];
 
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
-
-    public function __construct()
-    {
-        $this->mdb = DB::connection($this->connection)->getCollection($this->collection);
-    }
 }
