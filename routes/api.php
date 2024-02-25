@@ -39,4 +39,4 @@ Route::resource('movies', MovieController::class)->only(['store']);
 
 Route::resource('employee', EmployeeController::class)->only('store', 'show', 'update', 'destroy');
 
-Route::post('employees', [EmployeeController::class, 'getAllEmployees'])->name('employees.all');
+Route::match(['GET', 'POST'],'/employees', [EmployeeController::class, 'getAllEmployees'])->name('employees.all');

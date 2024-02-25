@@ -31,19 +31,19 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $errors = [];
-        $employee = Employee::firstWhere(['idNumber' => $request->idNumber]);
+        $employee = Employee::firstWhere(['id_number' => $request->id_number]);
 
         if (!empty($employee)) {
             $this->http_response_status_code = 201;
             $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
             $rules = [
-                'idNumber' => ['required', 'string', 'unique:employees,idNumber'],
-                'firstName' => ['required', 'string'],
-                'middleName' => ['required', 'string'],
-                'lastName' => ['required', 'string'],
+                'id_number' => ['required', 'string', 'unique:employees,id_number'],
+                'first_name' => ['required', 'string'],
+                'middle_name' => ['required', 'string'],
+                'last_name' => ['required', 'string'],
                 'email' => ['required', 'email', 'unique:employees,email'],
-                'contactNumber' => ['required', 'numeric', 'digits:11', 'unique:employees,contactNumber'],
+                'contact_number' => ['required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
                 'username' => ['required', 'string', 'min:5', 'unique:employees,username'],
                 'password' => ['required', 'confirmed', Password::defaults()],
                 'role' => ['required', 'string'],
@@ -85,9 +85,9 @@ class EmployeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $idNumber)
+    public function show(string $id_number)
     {
-        $employee = Employee::firstWhere(['idNumber' => $idNumber]);
+        $employee = Employee::firstWhere(['id_number' => $id_number]);
 
         if (!empty($employee)) {
             $this->http_response_status_code = 200;
@@ -109,7 +109,7 @@ class EmployeeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $idNumber)
+    public function edit(string $id_number)
     {
         //
     }
@@ -117,18 +117,18 @@ class EmployeeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $idNumber)
+    public function update(Request $request, string $id_number)
     {
         $employee = null;
-        $where = ['idNumber' => $idNumber];
+        $where = ['id_number' => $id_number];
 
         $rules = [
-            'idNumber' => ['sometimes', 'required', 'string', 'unique:employees,idNumber'],
-                'firstName' => ['sometimes', 'required', 'string'],
-                'middleName' => ['sometimes', 'required', 'string'],
-                'lastName' => ['sometimes', 'required', 'string'],
+            'id_number' => ['sometimes', 'required', 'string', 'unique:employees,id_number'],
+                'first_name' => ['sometimes', 'required', 'string'],
+                'middle_name' => ['sometimes', 'required', 'string'],
+                'last_name' => ['sometimes', 'required', 'string'],
                 'email' => ['sometimes', 'required', 'email', 'unique:employees,email'],
-                'contactNumber' => ['sometimes', 'required', 'numeric', 'digits:11', 'unique:employees,contactNumber'],
+                'contact_number' => ['sometimes', 'required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
                 'username' => ['sometimes', 'required', 'string', 'min:5', 'unique:employees,username'],
                 'password' => ['sometimes', 'required', 'confirmed', Password::defaults()],
                 'role' => ['sometimes', 'required', 'string'],
@@ -173,9 +173,9 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $idNumber)
+    public function destroy(string $id_number)
     {
-        $is_deleted = Employee::where(['idNumber' => $idNumber])->delete();
+        $is_deleted = Employee::where(['id_number' => $id_number])->delete();
 
         if ($is_deleted) {
             $this->http_response_status_code = 200;
@@ -199,8 +199,7 @@ class EmployeeController extends Controller
         $errors = [];
 
         $rules = [
-            'offset' => ['nullable', 'numeric'],
-            'limit' => ['nullable', 'numeric'],
+            'per_page' => ['sometimes', 'required', 'integer'],
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -212,10 +211,9 @@ class EmployeeController extends Controller
             $errors = $validator->errors();
         } else {
             $validated = $validator->validated();
-            $offset = isset($validated['offset']) ? $validated['offset'] : 0;
-            $limit = isset($validated['limit']) ? $validated['limit'] : 10;
+            $per_page = isset($validated['per_page']) ? $validated['per_page'] : 10;
 
-            $employees = Employee::offset($offset)->limit($limit)->get();
+            $employees = Employee::paginate($per_page);
 
             if (!empty($employees)) {
                 $this->http_response_status_code = 200;
@@ -234,7 +232,7 @@ class EmployeeController extends Controller
         if (!empty($errors)) {
             $result['errors'] = $errors;
         } else {
-            $result['data'] = $employees;
+            $result['employees'] = $employees;
         }
 
         return response()->json($result, $this->http_response_status_code);

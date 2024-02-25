@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mongodb')->create('employees', function ($collection) {
-            $collection->unique('idNumber');
+            $collection->unique('id_number');
             $collection->unique('email');
-            $collection->unique('contactNumber');
+            $collection->unique('contact_number');
             $collection->unique('username');
             $collection->index('role');
             $collection->index('designation');
