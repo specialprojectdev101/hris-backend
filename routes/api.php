@@ -35,8 +35,6 @@ Route::get('/ping', function (Request  $request) {
     return ['message' => $message];
 });
 
-Route::resource('movies', MovieController::class)->only(['store']);
-
 // Route::resource('employee', EmployeeController::class)->only('store', 'show', 'update', 'destroy');
 
 Route::controller(EmployeeController::class)->prefix('employee')->name('employee.')->group(function () {
