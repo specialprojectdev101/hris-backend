@@ -13,9 +13,6 @@ class Controller extends BaseController
 
     public $http_response_status_code = 500;
     public $response;
-    public $validator;
-    public $str;
-    public $arr;
 
     const RESPONSE_SUCCESS = [
         'code' => 0,
