@@ -10,6 +10,26 @@ use Illuminate\Validation\Rules\Password;
 
 class EmployeeController extends Controller
 {
+    public $attributes;
+
+    public function __construct()
+    {
+        $this->attributes = [
+            'api_key' => trans('api key'),
+            'data.id_number' => trans('id number'),
+            'data.role' => trans('role'),
+            'data.first_name' => trans('first name'),
+            'data.middle_name' => trans('middle name'),
+            'data.last_name' => trans('last name'),
+            'data.birthday' => trans('birthday'),
+            'data.email' => trans('email'),
+            'data.contact_number' => trans('contact number'),
+            'data.designation' => trans('designation'),
+            'data.username' => trans('username'),
+            'data.password' => trans('password'),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -32,30 +52,35 @@ class EmployeeController extends Controller
     public function store()
     {
         $request = request();
-        $employee = Employee::firstWhere(['id_number' => $request->id_number]);
+
+        $employee = Employee::firstWhere([
+            'id_number' => $request['data']['id_number'],
+        ]);
 
         if (!empty($employee)) {
             $this->http_response_status_code = 201;
             $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
             $rules = [
-                'id_number' => ['required', 'string', 'unique:employees,id_number'],
-                'role' => ['required', 'string'],
-                'first_name' => ['required', 'string'],
-                'middle_name' => ['required', 'string'],
-                'last_name' => ['required', 'string'],
-                'birthday' => ['required', 'date', 'date_format:Y-m-d'],
-                'email' => ['required', 'email', 'unique:employees,email'],
-                'contact_number' => ['required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
-                'designation' => ['required', 'string'],
-                'username' => ['required', 'string', 'min:5', 'unique:employees,username'],
-                'password' => ['required', 'confirmed', Password::defaults()],
+                'api_key' => ['required', 'string'],
+                'data.id_number' => ['required', 'string', 'unique:employees,id_number'],
+                'data.role' => ['required', 'string'],
+                'data.first_name' => ['required', 'string'],
+                'data.middle_name' => ['required', 'string'],
+                'data.last_name' => ['required', 'string'],
+                'data.birthday' => ['required', 'date', 'date_format:Y-m-d'],
+                'data.email' => ['required', 'email', 'unique:employees,email'],
+                'data.contact_number' => ['required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
+                'data.designation' => ['required', 'string'],
+                'data.username' => ['required', 'string', 'min:5', 'unique:employees,username'],
+                'data.password' => ['required', 'confirmed', Password::defaults()],
             ];
 
-            list($validated_request, $errors) = $this->validateRequest($request->all(), $rules);
+            list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
 
             if (empty($errors)) {
-                $employee = Employee::create($validated_request);
+                $validated_request = $validator->validated();
+                $employee = Employee::create($validated_request['data']);
 
                 if (!empty($employee)) {
                     $this->http_response_status_code = 200;
@@ -86,12 +111,15 @@ class EmployeeController extends Controller
         $request = request();
 
         $rules = [
+            'api_key' => ['required', 'string'],
             'id_number' => ['required', 'string'],
         ];
 
-        list($validated_request, $errors) = $this->validateRequest($request->all(), $rules);
+        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
 
         if (empty($errors)) {
+            $validated_request = $validator->validated();
+
             $employee = Employee::firstWhere([
                 'id_number' => $validated_request['id_number'],
             ]);
@@ -134,9 +162,10 @@ class EmployeeController extends Controller
     {
         $request = request();
         $employee = null;
-        $where = ['id_number' => $request->id_number];
 
         $rules = [
+            'api_key' => ['required', 'string'],
+            'id_number' => ['required', 'string'],
             'data.id_number' => ['sometimes', 'required', 'string', 'unique:employees,id_number'],
             'data.role' => ['sometimes', 'required', 'string'],
             'data.first_name' => ['sometimes', 'required', 'string'],
@@ -150,16 +179,11 @@ class EmployeeController extends Controller
             'data.password' => ['sometimes', 'required', 'confirmed', Password::defaults()],
         ];
 
-        $attributes = [];
-
-        foreach ($rules as $key => $rule) {
-            $value = str_replace('_', ' ', Str::afterLast($key, '.'));
-            $attributes = Arr::dot(Arr::add($attributes, $key, $value));
-        }
-
-        list($validated_request, $errors) = $this->validateRequest($request->all(), $rules, [], $attributes);
+        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
 
         if (empty($errors)) {
+            $validated_request = $validator->validated();
+            $where = ['id_number' => $validated_request['id_number']];
             $is_updated = Employee::where($where)->update($validated_request['data']);
 
             if ($is_updated) {
@@ -192,21 +216,37 @@ class EmployeeController extends Controller
     public function destroy()
     {
         $request = request();
-        $is_deleted = Employee::where(['id_number' => $request->id_number])->delete();
 
-        if ($is_deleted) {
-            $this->http_response_status_code = 200;
-            $this->response = self::RESPONSE_SUCCESS;
-            $this->response['message'] = 'Deleted successfully';
-        } else {
-            $this->http_response_status_code = 404;
-            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
+        $rules = [
+            'api_key' => ['required', 'string'],
+            'id_number' => ['required', 'string'],
+        ];
+
+        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
+
+        if (empty($errors)) {
+            $validated_request = $validator->validated();
+            $where = ['id_number' => $validated_request['id_number']];
+            $is_deleted = Employee::where($where)->delete();
+
+            if ($is_deleted) {
+                $this->http_response_status_code = 200;
+                $this->response = self::RESPONSE_SUCCESS;
+                $this->response['message'] = 'Deleted successfully';
+            } else {
+                $this->http_response_status_code = 404;
+                $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
+            }
         }
 
         $result = [
             'code' => $this->response['code'],
             'message' => $this->response['message'],
         ];
+
+        if (!empty($errors)) {
+            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        }
 
         return response()->json($result, $this->http_response_status_code);
     }
@@ -216,12 +256,15 @@ class EmployeeController extends Controller
         $errors = [];
 
         $rules = [
+            'api_key' => ['required', 'string'],
+            'page' => ['sometimes', 'required', 'integer'],
             'per_page' => ['sometimes', 'required', 'integer'],
         ];
 
-        list($validated_request, $errors) = $this->validateRequest($request->all(), $rules);
+        list($validator, $errors) = $this->validateRequest($request->all(), $rules);
 
         if (empty($errors)) {
+            $validated_request = $validator->validated();
             $per_page = isset($validated_request['per_page']) ? $validated_request['per_page'] : 10;
 
             $employees = Employee::paginate($per_page);

@@ -48,7 +48,6 @@ class Controller extends BaseController
     public function validateRequest($request, $rules, $messages = [], $attributes = [], $stop_on_first_failure = false)
     {
         $validator = Validator::make($request, $rules, $messages, $attributes);
-        $validated_request = [];
         $errors = [];
 
         if ($validator->fails()) {
@@ -60,10 +59,8 @@ class Controller extends BaseController
             }
 
             $errors = $validator->errors();
-        } else {
-            $validated_request = $validator->validated();
         }
 
-        return [$validated_request, $errors];
+        return [$validator, $errors];
     }
 }
