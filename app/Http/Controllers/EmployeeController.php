@@ -70,7 +70,7 @@ class EmployeeController extends Controller
         ];
 
         if (!empty($errors)) {
-            $result['errors'] = $errors;
+            $result['errors'] = Arr::undot($errors->jsonSerialize());
         } else {
             $result['data'] = $employee;
         }
@@ -111,7 +111,7 @@ class EmployeeController extends Controller
         ];
 
         if (!empty($errors)) {
-            $result['errors'] = $errors;
+            $result['errors'] = Arr::undot($errors->jsonSerialize());
         } else {
             $result['data'] = $employee;
         }
@@ -178,7 +178,7 @@ class EmployeeController extends Controller
         ];
 
         if (!empty($errors)) {
-            $result['errors'] = $errors;
+            $result['errors'] = Arr::undot($errors->jsonSerialize());
         } else {
             $result['data'] = $employee;
         }
@@ -241,7 +241,7 @@ class EmployeeController extends Controller
         ];
 
         if (!empty($errors)) {
-            $result['errors'] = $errors;
+            $result['errors'] = Arr::undot($errors->jsonSerialize());
         } else {
             $result['employees'] = $employees;
         }
