@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::connection('mongodb')->create('employees', function ($collection) {
             $collection->unique('id_number');
+            $collection->index('role');
             $collection->unique('email');
             $collection->unique('contact_number');
-            $collection->unique('username');
-            $collection->index('role');
             $collection->index('designation');
+            $collection->unique('username');
         });
     }
 

@@ -37,6 +37,12 @@ Route::get('/ping', function (Request  $request) {
 
 Route::resource('movies', MovieController::class)->only(['store']);
 
-Route::resource('employee', EmployeeController::class)->only('store', 'show', 'update', 'destroy');
+// Route::resource('employee', EmployeeController::class)->only('store', 'show', 'update', 'destroy');
 
-Route::match(['GET', 'POST'],'/employees', [EmployeeController::class, 'getAllEmployees'])->name('employees.all');
+Route::controller(EmployeeController::class)->prefix('employee')->name('employee.')->group(function () {
+    Route::post('/store', 'store')->name('store');
+    Route::match(['GET', 'POST'], '/show', 'show')->name('show');
+    Route::post('/update', 'update')->name('update');
+    Route::post('/destroy', 'destroy')->name('destroy');
+    Route::match(['GET', 'POST'], '/getAll', 'getAll')->name('getAll');
+});

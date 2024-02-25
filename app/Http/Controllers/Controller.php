@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Validator;
 
 class Controller extends BaseController
 {
@@ -12,6 +13,9 @@ class Controller extends BaseController
 
     public $http_response_status_code = 500;
     public $response;
+    public $validator;
+    public $str;
+    public $arr;
 
     const RESPONSE_SUCCESS = [
         'code' => 0,
@@ -38,7 +42,31 @@ class Controller extends BaseController
         'message' => 'Internal server error',
     ];
 
-    public function __construct() {
+    public function __construct()
+    {
+        // props
         $this->response = self::RESPONSE_INTERNAL_SERVER_ERROR;
+    }
+
+    public function validateRequest($request, $rules, $messages = [], $attributes = [], $stop_on_first_failure = false)
+    {
+        $validator = Validator::make($request, $rules, $messages, $attributes);
+        $validated_request = [];
+        $errors = [];
+
+        if ($validator->fails()) {
+            $this->http_response_status_code = 400;
+            $this->response = self::RESPONSE_BAD_REQUEST;
+
+            if ($stop_on_first_failure) {
+                $validator->stopOnFirstFailure()->fails();
+            }
+
+            $errors = $validator->errors();
+        } else {
+            $validated_request = $validator->validated();
+        }
+
+        return [$validated_request, $errors];
     }
 }
