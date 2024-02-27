@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\Validator;
 
 class Controller extends BaseController
 {
@@ -43,24 +42,5 @@ class Controller extends BaseController
     {
         // props
         $this->response = self::RESPONSE_INTERNAL_SERVER_ERROR;
-    }
-
-    public function validateRequest($request, $rules, $messages = [], $attributes = [], $stop_on_first_failure = false)
-    {
-        $validator = Validator::make($request, $rules, $messages, $attributes);
-        $errors = [];
-
-        if ($validator->fails()) {
-            $this->http_response_status_code = 400;
-            $this->response = self::RESPONSE_BAD_REQUEST;
-
-            if ($stop_on_first_failure) {
-                $validator->stopOnFirstFailure()->fails();
-            }
-
-            $errors = $validator->errors();
-        }
-
-        return [$validator, $errors];
     }
 }

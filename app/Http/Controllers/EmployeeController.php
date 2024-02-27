@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
 class EmployeeController extends Controller
@@ -49,9 +50,24 @@ class EmployeeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store()
+    public function store(Request $request)
     {
-        $request = request();
+        $rules = [
+            'api_key' => ['required', 'string'],
+            'data.id_number' => ['required', 'string', 'unique:employees,id_number'],
+            'data.role' => ['required', 'string'],
+            'data.first_name' => ['required', 'string'],
+            'data.middle_name' => ['required', 'string'],
+            'data.last_name' => ['required', 'string'],
+            'data.birthday' => ['required', 'date', 'date_format:Y-m-d'],
+            'data.email' => ['required', 'email', 'unique:employees,email'],
+            'data.contact_number' => ['required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
+            'data.designation' => ['required', 'string'],
+            'data.username' => ['required', 'string', 'min:5', 'unique:employees,username'],
+            'data.password' => ['required', 'confirmed', Password::defaults()],
+        ];
+
+        $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
         $employee = Employee::firstWhere([
             'id_number' => $request['data']['id_number'],
@@ -61,24 +77,7 @@ class EmployeeController extends Controller
             $this->http_response_status_code = 201;
             $this->response = self::RESPONSE_EMPLOYEE_ALREADY_EXISTS;
         } else {
-            $rules = [
-                'api_key' => ['required', 'string'],
-                'data.id_number' => ['required', 'string', 'unique:employees,id_number'],
-                'data.role' => ['required', 'string'],
-                'data.first_name' => ['required', 'string'],
-                'data.middle_name' => ['required', 'string'],
-                'data.last_name' => ['required', 'string'],
-                'data.birthday' => ['required', 'date', 'date_format:Y-m-d'],
-                'data.email' => ['required', 'email', 'unique:employees,email'],
-                'data.contact_number' => ['required', 'numeric', 'digits:11', 'unique:employees,contact_number'],
-                'data.designation' => ['required', 'string'],
-                'data.username' => ['required', 'string', 'min:5', 'unique:employees,username'],
-                'data.password' => ['required', 'confirmed', Password::defaults()],
-            ];
-
-            list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
-
-            if (empty($errors)) {
+            if ($validator->passes()) {
                 $validated_request = $validator->validated();
                 $employee = Employee::create($validated_request['data']);
 
@@ -86,6 +85,9 @@ class EmployeeController extends Controller
                     $this->http_response_status_code = 200;
                     $this->response = self::RESPONSE_SUCCESS;
                 }
+            } else {
+                $this->http_response_status_code = 400;
+                $this->response = self::RESPONSE_BAD_REQUEST;
             }
         }
 
@@ -94,8 +96,8 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if (!empty($errors)) {
-            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        if ($validator->fails()) {
+            $result['errors'] = Arr::undot($validator->errors()->getMessages());
         } else {
             $result['data'] = $employee;
         }
@@ -115,7 +117,7 @@ class EmployeeController extends Controller
             'id_number' => ['required', 'string'],
         ];
 
-        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
+        $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
         if (empty($errors)) {
             $validated_request = $validator->validated();
