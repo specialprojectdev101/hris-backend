@@ -96,7 +96,7 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if ($validator->fails()) {
+        if ($validator->fails() && empty($employee)) {
             $result['errors'] = Arr::undot($validator->errors()->getMessages());
         } else {
             $result['data'] = $employee;
@@ -119,7 +119,7 @@ class EmployeeController extends Controller
 
         $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
-        if (empty($errors)) {
+        if ($validator->passes()) {
             $validated_request = $validator->validated();
 
             $employee = Employee::firstWhere([
@@ -133,6 +133,9 @@ class EmployeeController extends Controller
                 $this->http_response_status_code = 404;
                 $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
             }
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
         $result = [
@@ -140,8 +143,8 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if (!empty($errors)) {
-            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        if ($validator->fails() && $this->response['code'] != self::RESPONSE_SUCCESS['code']) {
+            $result['errors'] = Arr::undot($validator->errors()->getMessages());
         } else {
             $result['data'] = $employee;
         }
@@ -160,9 +163,8 @@ class EmployeeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update()
+    public function update(Request $request)
     {
-        $request = request();
         $employee = null;
 
         $rules = [
@@ -181,9 +183,9 @@ class EmployeeController extends Controller
             'data.password' => ['sometimes', 'required', 'confirmed', Password::defaults()],
         ];
 
-        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
+        $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
-        if (empty($errors)) {
+        if ($validator->passes()) {
             $validated_request = $validator->validated();
             $where = ['id_number' => $validated_request['id_number']];
             $is_updated = Employee::where($where)->update($validated_request['data']);
@@ -196,6 +198,9 @@ class EmployeeController extends Controller
                 $this->http_response_status_code = 404;
                 $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
             }
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
         $result = [
@@ -203,8 +208,8 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if (!empty($errors)) {
-            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        if ($validator->fails() && $this->response['code'] != self::RESPONSE_SUCCESS['code']) {
+            $result['errors'] = Arr::undot($validator->errors()->getMessages());
         } else {
             $result['data'] = $employee;
         }
@@ -215,18 +220,16 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy()
+    public function destroy(Request $request)
     {
-        $request = request();
-
         $rules = [
             'api_key' => ['required', 'string'],
             'id_number' => ['required', 'string'],
         ];
 
-        list($validator, $errors) = $this->validateRequest($request->all(), $rules, [], $this->attributes);
+        $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
-        if (empty($errors)) {
+        if ($validator->passes()) {
             $validated_request = $validator->validated();
             $where = ['id_number' => $validated_request['id_number']];
             $is_deleted = Employee::where($where)->delete();
@@ -239,6 +242,9 @@ class EmployeeController extends Controller
                 $this->http_response_status_code = 404;
                 $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
             }
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
         $result = [
@@ -246,8 +252,8 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if (!empty($errors)) {
-            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        if ($validator->fails()) {
+            $result['errors'] = Arr::undot($validator->errors()->getMessages());
         }
 
         return response()->json($result, $this->http_response_status_code);
@@ -255,17 +261,15 @@ class EmployeeController extends Controller
 
     public function getAll(Request $request)
     {
-        $errors = [];
-
         $rules = [
             'api_key' => ['required', 'string'],
             'page' => ['sometimes', 'required', 'integer'],
             'per_page' => ['sometimes', 'required', 'integer'],
         ];
 
-        list($validator, $errors) = $this->validateRequest($request->all(), $rules);
+        $validator = Validator::make($request->all(), $rules, [], $this->attributes);
 
-        if (empty($errors)) {
+        if ($validator->passes()) {
             $validated_request = $validator->validated();
             $per_page = isset($validated_request['per_page']) ? $validated_request['per_page'] : 10;
 
@@ -278,6 +282,9 @@ class EmployeeController extends Controller
                 $this->http_response_status_code = 404;
                 $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
             }
+        } else {
+            $this->http_response_status_code = 404;
+            $this->response = self::RESPONSE_EMPLOYEE_NOT_FOUND;
         }
 
         $result = [
@@ -285,8 +292,8 @@ class EmployeeController extends Controller
             'message' => $this->response['message'],
         ];
 
-        if (!empty($errors)) {
-            $result['errors'] = Arr::undot($errors->jsonSerialize());
+        if ($validator->fails()) {
+            $result['errors'] = Arr::undot($validator->errors()->getMessages());
         } else {
             $result['employees'] = $employees;
         }
